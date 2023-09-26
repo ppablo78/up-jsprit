@@ -630,3 +630,6 @@ class JSpritSolver(up.engines.Engine,
 
     def destroy(self):
         pass
+
+env = up.environment.get_environment()
+env.factory.add_engine('jspritplanner', __name__, 'JSpritSolver')
