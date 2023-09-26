@@ -1,0 +1,223 @@
+problem name = VehicleRoutingProblem
+
+types = [Locatable, Freight - Locatable, Location - Locatable, Vehicle - Locatable, VehicleType]
+
+fluents = [
+  bool is_in[f=Freight - Locatable, l=Location - Locatable]
+  bool is_on[f=Freight - Locatable, v=Vehicle - Locatable]
+  bool is_at[v=Vehicle - Locatable, l=Location - Locatable]
+  integer t_earliest[f=Freight - Locatable]
+  integer t_latest[f=Freight - Locatable]
+  real weight[f=Freight - Locatable]
+  real maxLoad[v=VehicleType]
+]
+
+actions = [
+  action drive(Vehicle - Locatable v, Location - Locatable l_from, Location - Locatable l_to) {
+    preconditions = [
+      is_at(v, l_from)
+    ]
+    effects = [
+      is_at(v, l_to) := true
+      is_at(v, l_from) := false
+    ]
+  }
+  durative action delivery(Freight - Locatable f, Location - Locatable l_to, Vehicle - Locatable v, VehicleType vt) {
+    duration = [loadTime(f), loadTime(f)]
+    conditions = [
+      [start]:
+        is_at(v, l_to)
+        false
+        (t_earliest(f) <= start)
+        (start <= t_latest(f))
+    ]
+    effects = [
+      end:
+        weight(f) -= maxLoad(vt):
+        is_in(f, l_to) := true:
+        is_on(f, v) := false:
+    ]
+    simulated effects = [
+    ]
+  }
+  durative action pickup(Freight - Locatable f, Location - Locatable l_from, Vehicle - Locatable v, VehicleType vt) {
+    duration = [loadTime(f), loadTime(f)]
+    conditions = [
+      [start]:
+        (weight(f) <= maxLoad(vt))
+        is_at(v, l_from)
+        is_in(f, l_from)
+        (t_earliest(f) <= start)
+        (start <= t_latest(f))
+    ]
+    effects = [
+      end:
+        weight(f) += maxLoad(vt):
+        is_in(f, l_from) := false:
+        is_on(f, v) := true:
+    ]
+    simulated effects = [
+    ]
+  }
+]
+
+objects = [
+  Locatable: [v1, v2, v3, l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l101, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15]
+  Freight - Locatable: [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15]
+  Location - Locatable: [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l101]
+  Vehicle - Locatable: [v1, v2, v3]
+  VehicleType: [vt1]
+]
+
+initial fluents default = [
+  bool is_in[f=Freight - Locatable, l=Location - Locatable] := false
+  bool is_on[f=Freight - Locatable, v=Vehicle - Locatable] := false
+  bool is_at[v=Vehicle - Locatable, l=Location - Locatable] := false
+  integer t_earliest[f=Freight - Locatable] := 0
+  integer t_latest[f=Freight - Locatable] := 100000
+  real weight[f=Freight - Locatable] := 0
+  real maxLoad[v=VehicleType] := 0
+]
+
+initial values = [
+  x(l0) := 40
+  y(l0) := 50
+  x(l1) := 5
+  y(l1) := 35
+  x(l2) := 5
+  y(l2) := 45
+  x(l3) := 8
+  y(l3) := 40
+  x(l4) := 8
+  y(l4) := 45
+  x(l5) := 0
+  y(l5) := 45
+  x(l6) := 2
+  y(l6) := 40
+  x(l7) := 0
+  y(l7) := 40
+  x(l8) := 33
+  y(l8) := 35
+  x(l9) := 33
+  y(l9) := 32
+  x(l10) := 35
+  y(l10) := 32
+  x(l11) := 35
+  y(l11) := 30
+  x(l12) := 28
+  y(l12) := 52
+  x(l13) := 28
+  y(l13) := 55
+  x(l14) := 25
+  y(l14) := 50
+  x(l15) := 30
+  y(l15) := 55
+  x(l101) := 25
+  y(l101) := 52
+  weight(f1) := 10
+  loadTime(f1) := 90
+  t_earliest(f1) := 283
+  t_latest(f1) := 383
+  weight(f2) := 90
+  loadTime(f2) := 90
+  t_earliest(f2) := 665
+  t_latest(f2) := 716
+  weight(f3) := 40
+  loadTime(f3) := 90
+  t_earliest(f3) := 87
+  t_latest(f3) := 158
+  weight(f4) := 10
+  loadTime(f4) := 90
+  t_earliest(f4) := 665
+  t_latest(f4) := 716
+  weight(f5) := 20
+  loadTime(f5) := 90
+  t_earliest(f5) := 567
+  t_latest(f5) := 624
+  weight(f6) := 30
+  loadTime(f6) := 90
+  t_earliest(f6) := 383
+  t_latest(f6) := 434
+  weight(f7) := 30
+  loadTime(f7) := 90
+  t_earliest(f7) := 479
+  t_latest(f7) := 522
+  weight(f8) := 10
+  loadTime(f8) := 90
+  t_earliest(f8) := 16
+  t_latest(f8) := 80
+  weight(f9) := 10
+  loadTime(f9) := 90
+  t_earliest(f9) := 166
+  t_latest(f9) := 235
+  weight(f10) := 10
+  loadTime(f10) := 90
+  t_earliest(f10) := 264
+  t_latest(f10) := 321
+  weight(f11) := 10
+  loadTime(f11) := 90
+  t_earliest(f11) := 264
+  t_latest(f11) := 321
+  weight(f12) := 20
+  loadTime(f12) := 90
+  t_earliest(f12) := 812
+  t_latest(f12) := 883
+  weight(f13) := 10
+  loadTime(f13) := 90
+  t_earliest(f13) := 732
+  t_latest(f13) := 737
+  weight(f14) := 10
+  loadTime(f14) := 90
+  t_earliest(f14) := 65
+  t_latest(f14) := 144
+  weight(f15) := 40
+  loadTime(f15) := 90
+  t_earliest(f15) := 169
+  t_latest(f15) := 224
+  maxLoad(vt1) := 1000
+  fixedCost(vt1) := 22
+  variableCost(vt1) := 3
+  is_of(v1, vt1) := true
+  is_of(v2, vt1) := true
+  is_of(v3, vt1) := true
+  is_in(f1, l1) := true
+  is_in(f2, l2) := true
+  is_in(f3, l3) := true
+  is_in(f4, l4) := true
+  is_in(f5, l5) := true
+  is_in(f6, l6) := true
+  is_in(f7, l7) := true
+  is_in(f8, l8) := true
+  is_in(f9, l9) := true
+  is_in(f10, l10) := true
+  is_in(f11, l11) := true
+  is_in(f12, l12) := true
+  is_in(f13, l13) := true
+  is_in(f14, l14) := true
+  is_in(f15, l15) := true
+  is_at(v1, l0) := true
+  is_at(v2, l0) := true
+  is_at(v3, l0) := true
+]
+
+goals = [
+  is_in(f1, l101)
+  is_in(f2, l101)
+  is_in(f3, l101)
+  is_in(f4, l101)
+  is_in(f5, l101)
+  is_in(f6, l101)
+  is_in(f7, l101)
+  is_in(f8, l101)
+  is_in(f9, l101)
+  is_in(f10, l101)
+  is_in(f11, l101)
+  is_in(f12, l101)
+  is_in(f13, l101)
+  is_in(f14, l101)
+  is_in(f15, l101)
+  is_at(v1, l101)
+  is_at(v2, l101)
+  is_at(v3, l101)
+]
+
