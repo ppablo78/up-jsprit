@@ -1,0 +1,51 @@
+objects = [
+  Freight - Locatable: [f1, f2, f3, f4]
+  Location - Locatable: [l0, l1, l2, l3, l4, l5, l101]
+  Vehicle - Locatable: [v1, v2, v3]
+  VehicleType: [vt1]
+]
+initial values = [
+  x(l0) := 419028
+  y(l0) := 124964
+  x(l1) := 418986
+  y(l1) := 124739
+  x(l2) := 419009
+  y(l2) := 125025
+  x(l3) := 419183
+  y(l3) := 124667
+  x(l4) := 418902
+  y(l4) := 124923
+  x(l5) := 418833
+  y(l5) := 124541
+  x(l101) := 419361
+  y(l101) := 124690
+  weight(f1) := 10
+  loadTime(f1) := 90
+  t_earliest(f1) := 283000
+  t_latest(f1) := 883000
+  weight(f2) := 90
+  loadTime(f2) := 90
+  t_earliest(f2) := 15000
+  t_latest(f2) := 716000
+  weight(f3) := 40
+  loadTime(f3) := 90
+  t_earliest(f3) := 87000
+  t_latest(f3) := 900000
+  weight(f4) := 10
+  loadTime(f4) := 90
+  t_earliest(f4) := 65000
+  t_latest(f4) := 716000
+  maxLoad(vt1) := 1000
+  fixedCost(vt1) := 22
+  variableCost(vt1) := 3
+  is_of(v1, vt1) := true
+  is_of(v2, vt1) := true
+  is_of(v3, vt1) := true
+  is_in(f1, l1) := true
+  is_in(f2, l2) := true
+  is_in(f3, l3) := true
+  is_in(f4, l4) := true
+  is_at(v1, l0) := true
+  is_at(v2, l0) := true
+  is_at(v3, l0) := true
+]

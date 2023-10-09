@@ -1,0 +1,9 @@
+goals = [
+  is_in(f1, l101)
+  is_in(f2, l101)
+  is_in(f3, l101)
+  is_in(f4, l5)
+  is_at(v1, l101)
+  is_at(v2, l101)
+  is_at(v3, l101)
+]

@@ -1,0 +1,137 @@
+problem name = VehicleRoutingProblem
+
+types = [Locatable, Freight - Locatable, Location - Locatable, Vehicle - Locatable, VehicleType]
+
+fluents = [
+  bool is_in[f=Freight - Locatable, l=Location - Locatable]
+  bool is_on[f=Freight - Locatable, v=Vehicle - Locatable]
+  bool is_at[v=Vehicle - Locatable, l=Location - Locatable]
+  integer t_earliest[f=Freight - Locatable]
+  integer t_latest[f=Freight - Locatable]
+  real weight[f=Freight - Locatable]
+  real maxLoad[v=VehicleType]
+]
+
+actions = [
+  action drive(Vehicle - Locatable v, Location - Locatable l_from, Location - Locatable l_to) {
+    preconditions = [
+      is_at(v, l_from)
+    ]
+    effects = [
+      is_at(v, l_to) := true
+      is_at(v, l_from) := false
+    ]
+  }
+  durative action delivery(Freight - Locatable f, Location - Locatable l_to, Vehicle - Locatable v, VehicleType vt) {
+    duration = [loadTime(f), loadTime(f)]
+    conditions = [
+      [start]:
+        is_at(v, l_to)
+        false
+        (t_earliest(f) <= start)
+        (start <= t_latest(f))
+    ]
+    effects = [
+      end:
+        weight(f) -= maxLoad(vt):
+        is_in(f, l_to) := true:
+        is_on(f, v) := false:
+    ]
+    simulated effects = [
+    ]
+  }
+  durative action pickup(Freight - Locatable f, Location - Locatable l_from, Vehicle - Locatable v, VehicleType vt) {
+    duration = [loadTime(f), loadTime(f)]
+    conditions = [
+      [start]:
+        (weight(f) <= maxLoad(vt))
+        is_at(v, l_from)
+        is_in(f, l_from)
+        (t_earliest(f) <= start)
+        (start <= t_latest(f))
+    ]
+    effects = [
+      end:
+        weight(f) += maxLoad(vt):
+        is_in(f, l_from) := false:
+        is_on(f, v) := true:
+    ]
+    simulated effects = [
+    ]
+  }
+]
+
+objects = [
+  Locatable: [v1, v2, v3, l0, l1, l2, l3, l4, l5, l101, f1, f2, f3, f4]
+  Freight - Locatable: [f1, f2, f3, f4]
+  Location - Locatable: [l0, l1, l2, l3, l4, l5, l101]
+  Vehicle - Locatable: [v1, v2, v3]
+  VehicleType: [vt1]
+]
+
+initial fluents default = [
+  bool is_in[f=Freight - Locatable, l=Location - Locatable] := false
+  bool is_on[f=Freight - Locatable, v=Vehicle - Locatable] := false
+  bool is_at[v=Vehicle - Locatable, l=Location - Locatable] := false
+  integer t_earliest[f=Freight - Locatable] := 0
+  integer t_latest[f=Freight - Locatable] := 100000
+  real weight[f=Freight - Locatable] := 0
+  real maxLoad[v=VehicleType] := 0
+]
+
+initial values = [
+  x(l0) := 419028
+  y(l0) := 124964
+  x(l1) := 418986
+  y(l1) := 124739
+  x(l2) := 419009
+  y(l2) := 125025
+  x(l3) := 419183
+  y(l3) := 124667
+  x(l4) := 418902
+  y(l4) := 124923
+  x(l5) := 418833
+  y(l5) := 124541
+  x(l101) := 419361
+  y(l101) := 124690
+  weight(f1) := 10
+  loadTime(f1) := 90
+  t_earliest(f1) := 283000
+  t_latest(f1) := 883000
+  weight(f2) := 90
+  loadTime(f2) := 90
+  t_earliest(f2) := 15000
+  t_latest(f2) := 716000
+  weight(f3) := 40
+  loadTime(f3) := 90
+  t_earliest(f3) := 87000
+  t_latest(f3) := 900000
+  weight(f4) := 10
+  loadTime(f4) := 90
+  t_earliest(f4) := 65000
+  t_latest(f4) := 716000
+  maxLoad(vt1) := 1000
+  fixedCost(vt1) := 22
+  variableCost(vt1) := 3
+  is_of(v1, vt1) := true
+  is_of(v2, vt1) := true
+  is_of(v3, vt1) := true
+  is_in(f1, l1) := true
+  is_in(f2, l2) := true
+  is_in(f3, l3) := true
+  is_in(f4, l4) := true
+  is_at(v1, l0) := true
+  is_at(v2, l0) := true
+  is_at(v3, l0) := true
+]
+
+goals = [
+  is_in(f1, l101)
+  is_in(f2, l101)
+  is_in(f3, l101)
+  is_in(f4, l5)
+  is_at(v1, l101)
+  is_at(v2, l101)
+  is_at(v3, l101)
+]
+
