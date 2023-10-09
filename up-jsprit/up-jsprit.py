@@ -1,16 +1,16 @@
-import random
 import jpype
-from jpype import JClass
+#from jpype import JClass
 import jpype.imports
 from jpype.types import *
 import os
-import io
-import sys
+from . import config #for package distribuition
+#import config #for local distribution
+from .utils import generate_map, get_distance_and_time_from_graphhopper
 
-from contextlib import redirect_stdout
 from typing import Callable, IO, Optional
 import unified_planning as up
 from unified_planning import engines
+
 
 
 class Location_tmp:
@@ -72,7 +72,6 @@ class VehicleTypeRegistry:
         return cls.vehicle_type_map.get(type_id)
 
 
-
 class JSpritSolver(up.engines.Engine,
                    up.engines.mixins.OneshotPlannerMixin):
     def __init__(self, **options):
@@ -80,14 +79,18 @@ class JSpritSolver(up.engines.Engine,
         up.engines.Engine.__init__(self)
         up.engines.mixins.OneshotPlannerMixin.__init__(self)
         self.max_iterations = options.get('max_iterations', 2000)
-        self.working_dir = options.get('working_dir', None)
         self.problem_filename = options.get('problem_filename', None)
         self.print_problem = options.get('print_problem', True)
-        self.print_solution = options.get('print_solution', True)
+        self.solution_filename = options.get('solution_filename', None)
+        self.geocoordinates = options.get('geocoordinates', None)
 
    
-    def extract_initial_values(self, working_directory, input_filename, output_filename):
-        input_filepath = os.path.join(working_directory, input_filename)
+    def extract_initial_values(self, input_filename, output_filename, output_directory=None,):
+        
+        if output_directory is None:
+            output_directory = config.OUTPUT_DIRECTORY
+
+        input_filepath = os.path.join(output_directory, input_filename)
         print(input_filepath)
         with open(input_filepath, 'r') as infile:
             lines = infile.readlines()
@@ -157,7 +160,7 @@ class JSpritSolver(up.engines.Engine,
         start_marker5 = "initial values = ["
         end_marker5 = "]"
     
-         # Find the start and end markers in the file
+        # Find the start and end markers in the file
         start_index5 = next((i for i, line in enumerate(lines) if start_marker5 in line), None)
         end_index5 = next((i for i, line in enumerate(lines) if end_marker5 in line and i > start_index5), None)
     
@@ -169,7 +172,7 @@ class JSpritSolver(up.engines.Engine,
         extracted_lines5 = lines[start_index5:end_index5 + 1]
         
         # Create the full path for the output file
-        output_path = os.path.join(working_directory, output_filename)
+        output_path = os.path.join(config.OUTPUT_DIRECTORY, output_filename)
     
         # Write the extracted lines to the new file in the specified directory
         with open(output_path, 'w') as outfile:
@@ -183,8 +186,12 @@ class JSpritSolver(up.engines.Engine,
             
         print(f"Initial values have been extracted to {output_path}!")
 
-    def extract_goals(self, working_directory, input_filename, output_filename):
-        input_filepath = os.path.join(working_directory, input_filename)
+    def extract_goals(self, input_filename, output_filename, output_directory=None):
+        
+        if output_directory is None:
+            output_directory = config.OUTPUT_DIRECTORY
+        
+        input_filepath = os.path.join(output_directory, input_filename)
         
         with open(input_filepath, 'r') as infile:
             lines = infile.readlines()
@@ -205,7 +212,7 @@ class JSpritSolver(up.engines.Engine,
         extracted_lines = lines[start_index:end_index + 1]
     
         # Create the full path for the output file
-        output_path = os.path.join(working_directory, output_filename)
+        output_path = os.path.join(config.OUTPUT_DIRECTORY, output_filename)
     
         # Write the extracted lines to the new file in the specified directory
         with open(output_path, 'w') as outfile:
@@ -214,9 +221,12 @@ class JSpritSolver(up.engines.Engine,
         print(f"Goals have been extracted to {output_path}!")
 
 
-    def parse_initial_values(self, working_dir, input_filename):
+    def parse_initial_values(self, input_filename, output_directory=None):
     
-        filename = os.path.join(working_dir, input_filename)
+        if output_directory is None:
+            output_directory = config.OUTPUT_DIRECTORY
+
+        filename = os.path.join(output_directory, input_filename)
         
         locations = []
         vehicle_types = []
@@ -333,21 +343,15 @@ class JSpritSolver(up.engines.Engine,
     
                 elif line.startswith("is_in"):
                     shipment_name, location_name = line.split('(')[1].split(')')[0].split(', ')
-                    print("FF1 ", shipment_name, location_name)
-                    print(locations)
                     # Find the Location with the given name
                     target_location = next((l for l in locations if l.name == location_name), None)
                     if target_location:
-                        print("FF2 ", shipment_name, location_name)
                         # Find the Shipment with the given name
                         target_shipment = next((f for f in shipments if f.name == shipment_name), None)
-                        print("FF3 ", shipment_name, location_name)
-                        #print(target_location.y, target_shipment)
                         if target_shipment:
                             # Assign the location's x and y values to the shipment's attributes
                             target_shipment.initial_location_x = target_location.x
                             target_shipment.initial_location_y = target_location.y
-                            print("FF ", target_shipment.initial_location_x)
     
                 elif line.startswith("is_at"):
                     vehicle_name, location_name = line.split('(')[1].split(')')[0].split(', ')
@@ -357,42 +361,45 @@ class JSpritSolver(up.engines.Engine,
                     if target_location:
                         # Find the Shipment with the given name
                         target_vehicle = next((f for f in vehicles if f.name == vehicle_name), None)
-                        #print(target_location.y, target_shipment)
                         if target_vehicle:
                             # Assign the location's x and y values to the shipment's attributes
                             target_vehicle.initial_location_x = target_location.x
                             target_vehicle.initial_location_y = target_location.y
     
+
+        if config.DEBUG:
+            # Printing out the objects and their properties:
+            print("Locations:")
+            for location in locations:
+                print(location)
         
-        # Printing out the objects and their properties:
-        #print("Locations:")
-        #for location in locations:
-        #    print(location)
-    
-        #print("\nVehicle Types:")
-        #for v_type in vehicle_types:
-        #    print(v_type)
-    
-        #print("\nVehicles:")
-        #for vehicle in vehicles:
-        #    print(vehicle)
-    
-        # Printing out the objects and their properties
-        #print("A - Shipments:")
-        #for shipment in shipments:
-        #    print(shipment)
-    
+            print("\nVehicle Types:")
+            for v_type in vehicle_types:
+                print(v_type)
+        
+            print("\nVehicles:")
+            for vehicle in vehicles:
+                print(vehicle)
+
+            print("\nShipments:")
+            for shipment in shipments:
+                print(shipment)
+        
         return locations, shipments, vehicles, vehicle_types
 
-    def update_final_locations(self, working_dir, input_filename, locations, shipments, vehicles):
+    def update_final_locations(self,  input_filename, locations, shipments, vehicles, output_directory=None):
         
-        filename = os.path.join(working_dir, input_filename)
+        if output_directory is None:
+            output_directory = config.OUTPUT_DIRECTORY
+        
+        filename = os.path.join(output_directory, input_filename)
         with open(filename, 'r') as file:
             lines = file.readlines()
     
         for line in lines:
             line = line.strip()
     
+            # RULE 16
             if line.startswith("is_in"):
                 shipment_name, location_name = line.split('(')[1].split(')')[0].split(', ')
                 
@@ -405,7 +412,8 @@ class JSpritSolver(up.engines.Engine,
                         # Assign the location's x and y values to the shipment's final location attributes
                         target_shipment.final_location_x = target_location.x
                         target_shipment.final_location_y = target_location.y
-
+    
+            # RULE 17
             if line.startswith("is_at"):
                 vehicle_name, location_name = line.split('(')[1].split(')')[0].split(', ')
                 
@@ -419,15 +427,16 @@ class JSpritSolver(up.engines.Engine,
                         target_vehicle.final_location_x = target_location.x
                         target_vehicle.final_location_y = target_location.y
     
-        # Printing the results
-        #print("\nShipments:")
-        #for s in shipments:
-        #    print(f"{s.name}: Initial Location - ({s.initial_location_x}, {s.initial_location_y}), Final Location - ({s.final_location_x}, {s.final_location_y})")
-    
-        #print("\nVehicles:")
-        #for v in vehicles:
-        #    print(f"{v.name}: Final Location - ({v.final_location_x}, {v.final_location_y})")
+        if config.DEBUG:
+            # Printing the results of definition of goals
+            print("\nShipments:")
+            for s in shipments:
+                print(f"{s.name}: Initial Location - ({s.initial_location_x}, {s.initial_location_y}), Final Location - ({s.final_location_x}, {s.final_location_y})")
         
+            print("\nVehicles:")
+            for v in vehicles:
+                print(f"{v.name}: Final Location - ({v.final_location_x}, {v.final_location_y})")
+            
         return vehicles, shipments
 
     
@@ -466,6 +475,7 @@ class JSpritSolver(up.engines.Engine,
     def supports(problem_kind):
         return problem_kind <= JSpritSolver.supported_kind()
 
+
     def _solve(self, problem: 'up.model.Problem',
               callback: Optional[Callable[['up.engines.PlanGenerationResult'], None]] = None,
               timeout: Optional[float] = None,
@@ -475,96 +485,65 @@ class JSpritSolver(up.engines.Engine,
         # Start the JVM and set classpaths
         jpype.getDefaultJVMPath()
 
-        #jpype.shutdownJVM()
         if not jpype.isJVMStarted():
-            # Start JVM
-            jpype.startJVM('C:\\Program Files\\Java\\jdk-11.0.16.1\\bin\\server\\jvm.dll')
+            jpype.startJVM()
             print("JVM Started")
         if jpype.isJVMStarted():
-            print("JVM already Started")
-        
-        # Add the path to the jsprit JAR file
-        jpype.addClassPath("../jar/slf4j-api-1.7.32.jar")  # Add the path to SLF4J JAR
-        jpype.addClassPath("../jar/jsprit-core-1.9.0-beta.11.jar")
-        jpype.addClassPath("../jar/logback-core-1.0.11.jar")
-        jpype.addClassPath("../jar/logback-classic-1.0.11.jar")
-        jpype.addClassPath("../jar/jsprit-io-1.9.0-beta.4.jar")
-        jpype.addClassPath("../jar/commons-configuration-1.9.jar")
-        jpype.addClassPath("../jar/commons-lang-2.6.jar")
-        jpype.addClassPath("../jar/commons-logging-1.1.1.jar")
-        jpype.addClassPath("../jar/commons-math-2.1.jar")
-        jpype.addClassPath("../jar/commons-math3-3.4.jar")
-        jpype.addClassPath("../jar/gs-algo-1.3.jar")
-        jpype.addClassPath("../jar/gs-core-1.3.jar")
-        jpype.addClassPath("../jar/gs-ui-1.3.jar")
-        jpype.addClassPath("../jar/hamcrest-core-1.3.jar")
-        jpype.addClassPath("../jar/jcommon-1.0.23.jar")
-        jpype.addClassPath("../jar/jfreechart-1.0.19.jar")
-        jpype.addClassPath("../jar/jsprit-analysis-1.9.0-beta.11.jar")
-        jpype.addClassPath("../jar/junit-4.12.jar")
-        jpype.addClassPath("../jar/xml-apis-1.4.01.jar")
-        jpype.addClassPath("../jar/mbox2-1.0.jar")
-        jpype.addClassPath("../jar/pherd-1.0.jar")
-        jpype.addClassPath("../jar/java-util-1.8.3.jar")
-        jpype.addClassPath("../jar/scala-library-2.10.1.jar")
-        jpype.addClassPath("../jar/xercesImpl-2.12.0.jar")
-        jpype.addClassPath("../jar/xml-apis-1.4.01.jar")
+            print("JVM already started")
 
+        # Add the paths to the JAR files
+        for jar_file in config.JAR_FILES:
+            jpype.addClassPath(jar_file)
+
+        #Import necessary Java From Jsprit classes using JClass
         VehicleRoutingProblem = jpype.JClass("com.graphhopper.jsprit.core.problem.VehicleRoutingProblem")
-        VehicleRoutingProblemSolution = jpype.JClass("com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution")
-
-        #VrpXMLReader = jpype.JClass("com.graphhopper.jsprit.io.problem.VrpXMLReader")
-        VehicleRoutingProblemBuilder = jpype.JClass("com.graphhopper.jsprit.core.problem.VehicleRoutingProblem$Builder")
         VehicleImpl = jpype.JClass("com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl")
         VehicleType = jpype.JClass("com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl")
         Location = jpype.JClass("com.graphhopper.jsprit.core.problem.Location")
-        LocationBuilder = jpype.JClass("com.graphhopper.jsprit.core.problem.Location$Builder")
-        Service = jpype.JClass("com.graphhopper.jsprit.core.problem.job.Service")
         Shipment = jpype.JClass("com.graphhopper.jsprit.core.problem.job.Shipment")
-        ShipmentBuilder = jpype.JClass("com.graphhopper.jsprit.core.problem.job.Shipment$Builder")
         Plotter = jpype.JClass("com.graphhopper.jsprit.analysis.toolbox.Plotter")
-        vrp_xml = jpype.JClass("com.graphhopper.jsprit.io.problem.VrpXMLReader")
-        
         SelectBest = jpype.JClass("com.graphhopper.jsprit.core.algorithm.selector.SelectBest")
-        
         SolutionPrinter = jpype.JClass("com.graphhopper.jsprit.core.reporting.SolutionPrinter")
-        PrintEnum = jpype.JClass("com.graphhopper.jsprit.core.reporting.SolutionPrinter$Print")
-
-        GraphStreamViewer = jpype.JClass("com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer")
-        
+        GraphStreamViewer = jpype.JClass("com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer") 
         AlgorithmSearchProgressChartListener = jpype.JClass("com.graphhopper.jsprit.analysis.toolbox.AlgorithmSearchProgressChartListener")
         Jsprit = jpype.JClass("com.graphhopper.jsprit.core.algorithm.box.Jsprit")
-        # WaitingTimeCosts = jpype.JClass("com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts")
-        #WaitingTimeCosts = jpype.JClass("com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts")
         Coordinate = jpype.JClass("com.graphhopper.jsprit.core.util.Coordinate")
-        VehicleRoutingProblemSolution = jpype.JClass("com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution")
+        VehicleRoutingTransportCostsMatrix = jpype.JClass("com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix")
+        
+        # Import necessary Java classes for printing the solution
+        PrintWriter = jpype.JClass('java.io.PrintWriter')
+        File = jpype.JClass('java.io.File')
 
         p_locations = []
         p_vehicle_types = []
         p_vehicles = []
         p_shipments = []
         
-        
-        working_dir = '../test'
+        # Set file name for saving initial values and goals in two separate text file
+        # Get current working directory
+        cwd = os.getcwd()
+
+        # Construct path for output directory relative to the test script
+        output_directory = None
         initial_values_filename = "initial_values.txt"
         goals_filename = "goals.txt"
+        problem_filename = "parsed_problem.txt"
 
-        # Extract Initial Values from the problem and save in a temporary file
-        self.extract_initial_values(self.working_dir, self.problem_filename, initial_values_filename)
-
-        # Extract Goals from the problem and save in a temporary file
-        self.extract_goals(self.working_dir, self.problem_filename, goals_filename)
+        # Extract Initial Values from the Parsed Problem
+        self.extract_initial_values(self.problem_filename, initial_values_filename, output_directory)
         
-        # Call the function
-        p_locations, p_shipments, p_vehicles, p_vehicle_types = self.parse_initial_values(working_dir, initial_values_filename)
-                        
-        p_vehicles, p_shipments = self.update_final_locations(working_dir, goals_filename, p_locations, p_shipments, p_vehicles)
+        # Extract Goals from the Parsed Problem
+        self.extract_goals(self.problem_filename, goals_filename, output_directory)
+
+        # Transfer Initial Values to Jsprit Vehicle Routing Problem Definition
+        p_locations, p_shipments, p_vehicles, p_vehicle_types = self.parse_initial_values(initial_values_filename, output_directory)
+
+        # Transfer Goals to Jsprit Vehicle Routing Problem Definition
+        p_vehicles, p_shipments = self.update_final_locations(goals_filename, p_locations, p_shipments, p_vehicles, output_directory)
 
         #STEP 0 - BUILD VEHICLE ROUTING PROBLEM
         vrpbuilder = VehicleRoutingProblem.Builder.newInstance()
-        #vrpBuilder.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE);
-
-        
+               
         #STEP 1 - DEFINE VEHICLE TYPES
         for vt in p_vehicle_types:
             vehicle_type_builder = VehicleType.Builder.newInstance(vt.name);
@@ -580,7 +559,8 @@ class JSpritSolver(up.engines.Engine,
             vehicle_builder.setEndLocation(Location.newInstance(v.final_location_x, v.final_location_y))
             vehicle_builder.setType(VehicleTypeRegistry.get_vehicle_type_by_id(v.vehicle_type))
             vrpbuilder.addVehicle(vehicle_builder.build())
-            #STEP 3 - DEFINE LOCATIONS - COORDINATES   & STEP 5 - INITIALIZE LOCATION COORDINATES
+            
+        #STEP 3 - DEFINE LOCATIONS - COORDINATES   & STEP 5 - INITIALIZE LOCATION COORDINATES
         for l in p_locations:
             location_builder = Location.Builder().setName(l.name)
             coord = Coordinate.newInstance(l.x, l.y)
@@ -593,43 +573,93 @@ class JSpritSolver(up.engines.Engine,
             shipment_builder.addSizeDimension(s.weight,0);
             shipment_builder.setPickupServiceTime(s.loadTime);
             shipment_builder.addPickupTimeWindow(s.t_earliest, s.t_latest);
-          
             vrpbuilder.addJob(shipment_builder.build())
-
         
- 
-        vrp = vrpbuilder.build();
-        #print(vrp)
+        #IF ROUTING COST IS DEFINED to TRUE
+        if self.geocoordinates == True:
+            
+            # Convert x and Y in Latitude and Logitude
+            locations = [{"latitude": loc.x/10000, "longitude": loc.y/10000} for loc in p_locations]
+            if config.DEBUG:
+                print(locations)
+    
+            costMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder.newInstance(True)
 
-        # Printing out the objects and their properties:
+            # Fill the Distance and Time Matrices:
+            for i, loc1 in enumerate(locations):
+                for j, loc2 in enumerate(locations):
+                    if i < j:  # Only compute for the upper triangle
+                        distance, time = get_distance_and_time_from_graphhopper(config.API_KEY, loc1, loc2, )
+                        # Format the location dictionaries into the desired string format
+                        loc1_str = f"[x={loc1['latitude']*10000:.1f}][y={loc1['longitude']*10000:.1f}]"
+                        loc2_str = f"[x={loc2['latitude']*10000:.1f}][y={loc2['longitude']*10000:.1f}]"
+                        
+                        if config.DEBUG:
+                            print(f"{loc1_str}, {loc2_str}, {distance}, {time}")
+                        
+                        costMatrixBuilder.addTransportDistance(loc1_str, loc2_str, distance)
+                        costMatrixBuilder.addTransportTime(loc1_str, loc2_str, time)
 
+            # Build the Cost Matrix
+            costMatrix = costMatrixBuilder.build()
+
+            # Set the custom routing costs
+            vrpbuilder.setRoutingCost(costMatrix)
+
+        vrp = vrpbuilder.build()
+       
         vra = Jsprit.createAlgorithm(vrp)
+
+        # Set the maximum number of iterations
         vra.setMaxIterations(self.max_iterations)
 
-        #vra.getAlgorithmListeners().addListener(AlgorithmSearchProgressChartListener("output/sol_progress.png"))
+        
+        # Print the solution progress as function of the iteration
+        vra.getAlgorithmListeners().addListener(AlgorithmSearchProgressChartListener(os.path.join(config.OUTPUT_DIRECTORY, "solution_progress.png")))
 
         # Solve the problem
         solutions = vra.searchSolutions()
 
         # Retrieve the best solution
         bestSolution = SelectBest().selectSolution(solutions)
+        
+        # Create a PrintWriter that writes directly to a file
+        with PrintWriter(File(os.path.join(config.OUTPUT_DIRECTORY, self.solution_filename))) as writer:
+            SolutionPrinter.print_(writer, vrp, bestSolution, SolutionPrinter.Print.VERBOSE)
+        
+        # Call the print_ method to capture its output
+        SolutionPrinter.print_(vrp, bestSolution, SolutionPrinter.Print.VERBOSE)  # Using the corrected print_ method
 
-       
-        # Call the print method
-        #SolutionPrinter.print(bestSolution)
+        # Plot the solution
+        solutionPlot = Plotter(vrp, bestSolution);
+        solutionPlot.plot(os.path.join(config.OUTPUT_DIRECTORY, "solutionPlot.png"), "Best Solution");
 
+        # View the solution
         viewer = GraphStreamViewer(vrp, bestSolution)
         viewer.labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display()
+
+        # Get the number of unassigned jobs
+        unassigned_jobs = bestSolution.getUnassignedJobs().size()
+        # Get the total number of jobs 
+        assigned_jobs = vrp.getJobs().values().size()
+
+        # Evaluate the status
+        if unassigned_jobs == 0:
+            status = up.engines.PlanGenerationResultStatus.SOLVED_OPTIMALLY
+        elif unassigned_jobs / assigned_jobs < 0.1:
+            status = up.engines.PlanGenerationResultStatus.SOLVED_SATISFICING
+        else:
+            status = up.engines.PlanGenerationResultStatus.UNSOLVED
+
+        # IF THE PROBLEM TO SOLVE USE GEO COORDINATES GENERATE A GEOREFERENCE MAP
+        if self.geocoordinates == True:
+            m = generate_map(bestSolution)
+            m.save(os.path.join(config.OUTPUT_DIRECTORY, "routes_map.html"))
 
         # Stop JVM
         jpype.shutdownJVM()
 
-
-        status = up.engines.PlanGenerationResultStatus.SOLVED_SATISFICING
         return up.engines.PlanGenerationResult(status, None, self.name)
 
     def destroy(self):
         pass
-
-env = up.environment.get_environment()
-env.factory.add_engine('jspritplanner', __name__, 'JSpritSolver')
