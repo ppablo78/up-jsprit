@@ -102,19 +102,19 @@ def generate_vrp_problem():
   ##########################################
 
   problem.set_initial_value(x(l0), 419028)
-  problem.set_initial_value(y(l0), 124964)  # Near Vatican City
+  problem.set_initial_value(y(l0), 124964)  
   problem.set_initial_value(x(l1), 418986)
-  problem.set_initial_value(y(l1), 124739)  # Near Castel Sant'Angelo
+  problem.set_initial_value(y(l1), 124739) 
   problem.set_initial_value(x(l2), 419009)
-  problem.set_initial_value(y(l2), 125025)  # Near Piazza Navona
+  problem.set_initial_value(y(l2), 125025)
   problem.set_initial_value(x(l3), 419183)
-  problem.set_initial_value(y(l3), 124667)  # Near Parioli
+  problem.set_initial_value(y(l3), 124667)
   problem.set_initial_value(x(l4), 418902)
-  problem.set_initial_value(y(l4), 124923)  # Near Colosseum
+  problem.set_initial_value(y(l4), 124923)
   problem.set_initial_value(x(l5), 418833)
   problem.set_initial_value(y(l5), 124541)
   problem.set_initial_value(x(l101), 419361) 
-  problem.set_initial_value(y(l101), 124690) # Near Quartiere Africano
+  problem.set_initial_value(y(l101), 124690)
 
   ##########################################
   # STEP 6 DEFINE PROPERTY OF THE SHIPMENT
@@ -166,7 +166,7 @@ def generate_vrp_problem():
   # STEP 9- DEFINE INITIAL LOCATION OF SHIPMENTS - PICKUP
   #######################################################
 
-  problem.set_initial_value(is_in(f1, l1), True) # in the conversion consider only where is set to TRUE
+  problem.set_initial_value(is_in(f1, l1), True)
   problem.set_initial_value(is_in(f2, l2), True)
   problem.set_initial_value(is_in(f3, l3), True)
   problem.set_initial_value(is_in(f4, l4), True)
