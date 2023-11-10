@@ -1,17 +1,12 @@
 import jpype
-#from jpype import JClass
 import jpype.imports
 from jpype.types import *
 import os
-from . import config #for package distribuition
-#import config #for local distribution
-from .utils import generate_map, get_distance_and_time_from_graphhopper
-
+from up_jsprit import config #for local distibution
+from up_jsprit.utils import generate_map, get_distance_and_time_from_graphhopper #for local distibution
 from typing import Callable, IO, Optional
 import unified_planning as up
 from unified_planning import engines
-
-
 
 class Location_tmp:
     def __init__(self, name):
@@ -79,10 +74,32 @@ class JSpritSolver(up.engines.Engine,
         up.engines.Engine.__init__(self)
         up.engines.mixins.OneshotPlannerMixin.__init__(self)
         self.max_iterations = options.get('max_iterations', 2000)
+        self.output_dir = options.get('output_dir', '')
         self.problem_filename = options.get('problem_filename', None)
         self.print_problem = options.get('print_problem', True)
         self.solution_filename = options.get('solution_filename', None)
         self.geocoordinates = options.get('geocoordinates', None)
+        self.debug = options.get('debug', False)
+        self.api = options.get('api', '')
+        self.view = options.get('view', False)
+
+        # Check if DEBUG option is set to TRUE
+        if self.debug:
+            config.DEBUG = True
+        
+        # Define the directory where the results are saved
+        if self.output_dir:
+            config.OUTPUT_DIRECTORY = self.output_dir
+        else:
+            config.OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'output')
+        
+        # Check if the directory exists, and if not, create it
+        if not os.path.exists(config.OUTPUT_DIRECTORY):
+            os.makedirs(config.OUTPUT_DIRECTORY)
+
+        # Set up the Graphopper API KEY 
+        if self.api:
+            config.API_KEY = self.api
 
    
     def extract_initial_values(self, input_filename, output_filename, output_directory=None,):
@@ -524,7 +541,7 @@ class JSpritSolver(up.engines.Engine,
         cwd = os.getcwd()
 
         # Construct path for output directory relative to the test script
-        output_directory = None
+        output_directory = config.OUTPUT_DIRECTORY
         initial_values_filename = "initial_values.txt"
         goals_filename = "goals.txt"
         problem_filename = "parsed_problem.txt"
@@ -589,7 +606,7 @@ class JSpritSolver(up.engines.Engine,
             for i, loc1 in enumerate(locations):
                 for j, loc2 in enumerate(locations):
                     if i < j:  # Only compute for the upper triangle
-                        distance, time = get_distance_and_time_from_graphhopper(config.API_KEY, loc1, loc2, )
+                        distance, time = get_distance_and_time_from_graphhopper(loc1, loc2)
                         # Format the location dictionaries into the desired string format
                         loc1_str = f"[x={loc1['latitude']*10000:.1f}][y={loc1['longitude']*10000:.1f}]"
                         loc2_str = f"[x={loc2['latitude']*10000:.1f}][y={loc2['longitude']*10000:.1f}]"
@@ -635,8 +652,9 @@ class JSpritSolver(up.engines.Engine,
         solutionPlot.plot(os.path.join(config.OUTPUT_DIRECTORY, "solutionPlot.png"), "Best Solution");
 
         # View the solution
-        viewer = GraphStreamViewer(vrp, bestSolution)
-        viewer.labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display()
+        if self.view:
+            viewer = GraphStreamViewer(vrp, bestSolution)
+            viewer.labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display()
 
         # Get the number of unassigned jobs
         unassigned_jobs = bestSolution.getUnassignedJobs().size()
