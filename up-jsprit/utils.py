@@ -2,32 +2,15 @@ import requests
 import folium
 import polyline
 from . import config #for package distribuition
-#import config #for local distribution
 
-def get_route_from_graphhopper(start, end, api_key):
-    url = f"https://graphhopper.com/api/1/route?point={start[0]},{start[1]}&point={end[0]},{end[1]}&vehicle=car&locale=en&key={api_key}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        data = response.json()
-        if "paths" in data and len(data["paths"]) > 0 and "points" in data["paths"][0]:
-            # Decode the polyline
-            coords = polyline.decode(data["paths"][0]["points"])
-            return coords
-        else:
-            print("Unexpected response format or no paths found.")
-            return None
-    else:
-        print(f"GraphHopper API returned a {response.status_code} status.")
-        return None
 
-def get_distance_and_time_from_graphhopper(API_KEY, point1, point2):
+def get_distance_and_time_from_graphhopper(point1, point2):
     base_url = "https://graphhopper.com/api/1/route"
     params = {
         "point": [f"{point1['latitude']},{point1['longitude']}", f"{point2['latitude']},{point2['longitude']}"],
         "vehicle": "car",
         "type": "json",
-        "key": API_KEY
+        "key": config.API_KEY
     }
     
     response = requests.get(base_url, params=params)
@@ -139,7 +122,7 @@ def generate_map(bestSolution):
 
             if start != end and i == results[idx+1][0]:  # Ensure start and end are not the same and they belong to the same route
 
-                route_coords = get_route_from_graphhopper(start, end, config.API_KEY)
+                route_coords = get_route_from_graphhopper(start, end)
                 
             #    if config.DEBUG:
             #        print("Route Coords:", route_coords)  # Print the coordinates for debugging
@@ -160,3 +143,21 @@ def generate_map(bestSolution):
     # Save the map on an html page
     #m.save(os.path.join(config.OUTPUT_DIRECTORY, "routes_map.html"))
     return m
+
+
+def get_route_from_graphhopper(start, end):
+    url = f"https://graphhopper.com/api/1/route?point={start[0]},{start[1]}&point={end[0]},{end[1]}&vehicle=car&locale=en&key={config.API_KEY}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if "paths" in data and len(data["paths"]) > 0 and "points" in data["paths"][0]:
+            # Decode the polyline
+            coords = polyline.decode(data["paths"][0]["points"])
+            return coords
+        else:
+            print("Unexpected response format or no paths found.")
+            return None
+    else:
+        print(f"GraphHopper API returned a {response.status_code} status.")
+        return None
