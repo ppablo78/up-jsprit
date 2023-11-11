@@ -54,11 +54,11 @@ The second example is provided as a jupyter notebook available here [![Open In G
 
 The library can be used also running python command through the following step:
 1) Create a python file [vrp_domain_generator.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/vrp_domain_generator.py) that defines the problem domain using the Unified Plannin Library formalism. This file does not need to be changed and it represents the problem domain representation of Vehicle Routing Problems that can be solved by the JSprit engine.
-2) Create a python file that represents the VRP. Two examples are provided
-   a) [Example 1 - vrp_problem_generator_geo.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/vrp_problem_generator_xy.py) where the coordinates of locations are provided in terms of x, Y and the distance is calculated as an Euclidean distance
-   b) [Example 2 - vrp_problem_generator_geo.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/vrp_problem_generator_geo) where the coordinates of locations are provided in terms of latitude and longitude. In this case, the distance and the travel time are calculated query, thorugh API, the GraphHopper engine on the basis of real maps and data.
-3) Create a file [solve_vrp_problem.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/solve_vrp_problem.py) that solves the problem  parsing the VRP defined before and using the up-jpsrit library
-4) Executing the solve_vrp_problem.py providing an input file as follow
+2) Create a python file that represents the VRP. Two examples are provided:
+   - [Example 1 - vrp_problem_generator_geo.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/vrp_problem_generator_xy.py) where the coordinates of locations are provided in terms of x, Y and the distance is calculated as an Euclidean distance
+   -  [Example 2 - vrp_problem_generator_geo.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/vrp_problem_generator_geo) where the coordinates of locations are provided in terms of latitude and longitude. In this case, the distance and the travel time are calculated query, thorugh API, the GraphHopper engine on the basis of real maps and data.
+4) Create a file [solve_vrp_problem.py](https://github.com/ppablo78/up-jsprit/blob/main/test.script/solve_vrp_problem.py) that solves the problem  parsing the VRP defined before and using the up-jpsrit library
+5) Executing the solve_vrp_problem.py providing an input file as follow
 
 ```bash
 python solve_vrp_problem.py -input .\vrp_problem_generator_3.py
