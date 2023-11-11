@@ -41,11 +41,7 @@ The installation has been successfully tested on following environments:
 
 ## Usage
 
-Here's two different basic examples of how to use up-jsprit:
-(https:///github.com/aiplan4eu/unified-planning/blob/master/docs/notebooks/01-basic-example.ipynb)
-(https://colab.research.google.com/github/aiplan4eu/unified-planning/blob/master/docs/notebooks/01-basic-example.ipynb)
-
-The package is distributed with two examples that shows in details the steps of the processing going through the following main steps:
+The package is available in the [PiPy repository](https://pypi.org/project/up-jsprit/) and distributed with two examples that shows in details the steps of the processing going through the following main steps:
 
 - Definition of a Vehicle Routing Problem using the unified-planning-library
 - Parsing of the Problem to extract features to be translated in the JSprit library formalism
