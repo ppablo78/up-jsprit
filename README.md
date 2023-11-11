@@ -1,7 +1,8 @@
 # UP-JSPRIT
 
 The up-jsprit library is a Python package developed in the frame of the [AIRoutePlan](https://www.ai4europe.eu/research/ai-catalog/airouteplan) projet for solving vehicle routing problems integrating the [Unified Planning Library](https://github.com/aiplan4eu/unified-planning) with the [JSprit](https://github.com/graphhopper/jsprit) toolkit. The library provides a seamless interface to work with JSprit functionalities and offers additional utilities to enhance the user experience.
-In particular, the library allows to solve VRP problem providing locations coordinates in term of latitude and longitude. Moreovere the optimization is performed using real distances and travel times
+In particular, the library allows to solve VRP problem providing locations coordinates in term of latitude and longitude. Moreovere the optimization is performed using real distances and travel times.
+The package is distributed at the following [link](https://pypi.org/project/up-jsprit) in the PiPy repository.
 
 ## Features
 
