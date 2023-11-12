@@ -6,7 +6,7 @@ The package is distributed at the following [link](https://pypi.org/project/up-j
 
 ## Features
 
-The up-jsprit library allows to define a wide range of Vehicle Route Problems specifying
+The up-jsprit library allows to define a wide range of Vehicle Route Problems specifying:
 - locations using latitude and longitude coordinates or x and y coordinates
 - characteristics of the key actions:
   - pickup: it represents the load of a good from a customer placed at a certain location to the vehicle
@@ -66,7 +66,7 @@ The library can be used also running python command through the following step:
 5) Executing the solve_vrp_problem.py providing an input file as follow
 
 ```bash
-python solve_vrp_problem.py -input .\vrp_problem_generator_3.py
+python solve_vrp_problem.py -input .\vrp_problem_generator_xy.py
 ```
 
 The command can be run specifying following options:
@@ -80,7 +80,7 @@ The command can be run specifying following options:
 An example is shown below
 
 ```bash
-python solve_vrp_problem.py -iter 200 -input .\vrp_problem_generator_3.py --debug False --geo True -api 36d16024-8b24-4091-bb89-7adef7632a20 -view True
+python solve_vrp_problem.py -iter 200 -input .\vrp_problem_generator_geo.py --debug False --geo True -api 36d16024-8b24-4091-bb89-7adef7632a20 -view True
 ```
 
 ## Results
