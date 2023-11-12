@@ -42,8 +42,12 @@ The installation has been successfully tested on following environments:
 
 ## Usage
 
-The package is available in the [PiPy repository](https://pypi.org/project/up-jsprit/) and distributed with two examples that shows in details the steps of the processing going through the following main steps:
+The [up-jsprit](https://pypi.org/project/up-jsprit/) library has been created as a python package available on the PiPy repository.
+The package is composed by following files:
+-	[up-jsprit.py](https://github.com/ppablo78/up-jsprit/blob/main/up-jsprit/up-jsprit.py): this file defines the main content of the library and extends the “solve” function of the Unified Planning Library to interface the planning engine of the Jsprit toolkit. The class includes also functionalities to parse VRP problems defined using unified-planning-library formalism and ingest them to the Jsprit planning engine
+-	[utils.py](https://github.com/ppablo78/up-jsprit/blob/main/up-jsprit/utils.py): this file defines additional functionalities needed to interface the GraphHopper routing services through API. These functionalities are needed when the VRP is defined using geocoordinates (latitude and longitude) and the solution is based on real values of distance and travel time between location. For using these functionalities, the User must provide its own API_KEY (https://www.graphhopper.com/)
 
+The package is distributed with two examples (Jupyter and Google Colab notebook) that detail the steps of the processing going through the following main steps:
 - Definition of a Vehicle Routing Problem using the unified-planning-library
 - Parsing of the Problem to extract features to be translated in the JSprit library formalism
 - Call the ip-jsprit Solution Planner for solve the VRP
